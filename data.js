@@ -1,5 +1,5 @@
 // data.js
-const umaData = {
+const graphData = {
     nodes: [
        { id: "spe", name: "特别周", category: "Team Spica", symbolSize: 55, tooltip: { formatter: "<b>特别周</b><br>从乡下来到特雷森学园的元气少女，拥有无尽的食量与毅力。" } },
                 { id: "suzuka", name: "无声铃鹿", category: "Team Spica", symbolSize: 55, tooltip: { formatter: "<b>无声铃鹿</b><br>异次元的逃亡者，奔跑姿势绝美的天才。" } },
@@ -379,5 +379,5 @@ const umaData = {
                 { name: "原创强敌" }, { name: "三女神" }, { name: "黄金家族源头" }, { name: "短英里女王" },
                 { name: "象征家族/新星" }, { name: "名门血统" }, { name: "泥地新星" }, { name: "泥地女王" },
                 { name: "海外/泥地" }, { name: "气槽家族 / 03世代" }, { name: "樱花家族" }, { name: "海外/短英里" }
-]
-};
+    ]
+    };

@@ -4,127 +4,254 @@
     <meta charset="UTF-8">
     <title>特雷森学园：赛马娘羁绊档案馆</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    
     <script src="data.js"></script>
-    
     <style>
-        body { margin: 0; background-color: #1a1a2e; color: white; font-family: sans-serif; }
-        #main { width: 100vw; height: 100vh; overflow: hidden; }
-        .title { position: absolute; top: 20px; left: 20px; z-index: 10; }
+        /* 1. 全局基础样式 */
+        body { margin: 0; background-color: #1a1a2e; color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* 🌟 核心新增：全息投影开机 CSS 动画 (调用 GPU 硬件加速，零卡顿) */
+        @keyframes cyberBoot {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.85); 
+                filter: blur(20px) brightness(300%); 
+            }
+            40% {
+                opacity: 1;
+                filter: blur(5px) brightness(150%);
+            }
+            100% { 
+                transform: scale(1); 
+                filter: blur(0) brightness(100%); 
+            }
+        }
+
+        #main { 
+            width: 100vw; 
+            height: 100vh; 
+            /* 绑定动画：1.5秒，使用极其丝滑的缓动曲线 */
+            animation: cyberBoot 1.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; 
+            transform-origin: center center;
+        }
+
+        .title { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        
+        /* 2. 雷达搜索面板赛博朋克样式 */
+        .search-box {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+            background: rgba(20, 20, 40, 0.85);
+            padding: 12px 15px;
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+        }
+        #searchInput {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            outline: none;
+            padding: 5px;
+            width: 180px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        #searchInput:focus { border-bottom-color: #00ffff; }
+        #searchInput::placeholder { color: rgba(255, 255, 255, 0.4); }
+        #searchBtn {
+            background: transparent;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            padding: 6px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        #searchBtn:hover {
+            background: #00ffff;
+            color: #1a1a2e;
+            box-shadow: 0 0 10px #00ffff;
+        }
     </style>
 </head>
 <body>
     <div class="title">
-        <h1>特雷森学园羁绊网络</h1>
+        <h1 style="text-shadow: 0 0 10px #00ffff;">特雷森学园羁绊网络</h1>
     </div>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="检索代号或姓名...">
+        <button id="searchBtn">锁定 (Enter)</button>
+    </div>
+    
     <div id="main"></div>
 
     <script>
-        var chartDom = document.getElementById('main');
-        var myChart = echarts.init(chartDom);
+        const chartDom = document.getElementById('main');
+        const myChart = echarts.init(chartDom);
         
-        // --- 头像加载逻辑 ---
-        // ⚠️ 确保你的 data.js 里面的全局变量名是 graphData，而不是 umaData！
-        graphData.nodes.forEach(function(node) {
-            // 直接读取同级目录 icons 文件夹下的图片
+        // ==========================================
+        // 1. 数据预处理
+        // ==========================================
+        graphData.nodes.forEach(node => {
             node.symbol = 'image://icons/' + node.id + '.png';
-            
-            // 防错处理：确保有 symbolSize 才乘以 1.2
-            if (node.symbolSize) {
-                node.symbolSize = node.symbolSize * 1.2;
-            } else {
-                node.symbolSize = 50; // 默认大小
-            }
-            
-            // 如果图片还没准备好，先显示一个深色背景兜底
+            node.symbolSize = node.symbolSize ? node.symbolSize * 1.2 : 50;
             node.itemStyle = { color: '#3b3b5c' }; 
         });
 
-        // 图表的华丽配置 (次世代UI升级版)
-        var option = {
-            backgroundColor: '#1a1a2e', // 统一暗黑背景
+        // ==========================================
+        // 2. 核心图表配置 (坚如磐石的防撕裂底层)
+        // ==========================================
+        const option = {
+            backgroundColor: '#1a1a2e',
+            animation: false, // 严禁内部动画，确保护连线 100% 严丝合缝插入节点
+
             tooltip: { 
                 show: true, 
-                backgroundColor: 'rgba(20, 20, 40, 0.9)', // 弹窗背景变高级的半透明深蓝
-                borderColor: '#00ffff', // 弹窗边框加上青色赛博朋克感
+                backgroundColor: 'rgba(20, 20, 40, 0.95)', 
+                borderColor: '#00ffff', 
                 borderWidth: 1,
-                textStyle: { color: '#fff', fontSize: 16 } // 弹窗文字纯白
+                padding: 12,
+                textStyle: { color: '#fff', fontSize: 14 },
+                formatter: function (params) {
+                    if (params.dataType === 'node') {
+                        const imgPath = params.data.symbol ? params.data.symbol.replace('image://', '') : '';
+                        return `
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 150px;">
+                                <img src="${imgPath}" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00ffff; box-shadow: 0 0 8px #00ffff; object-fit: cover; background-color: #3b3b5c;">
+                                <div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #00ffff; margin-bottom: 4px;">${params.data.name}</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">特雷森档案编号: ${params.data.id}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (params.dataType === 'edge') {
+                        const relationNames = params.name ? params.name.replace('>', ' <span style="color:#00ffff;">↔</span> ') : '';
+                        const relationValue = params.data.value || params.data.relation || '羁绊'; 
+                        return `
+                            <div style="padding: 4px 8px; text-align: center;">
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">羁绊观测记录</div>
+                                <div style="font-size: 14px; font-weight: bold;">${relationNames}</div>
+                                <div style="margin-top: 10px; font-size: 16px; color: #ff00ff; text-shadow: 0 0 5px #ff00ff;">
+                                    【 ${relationValue} 】
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
             },
+            
             legend: { 
-                // ✅ 这里动态读取了 graphData 里的分类作为图例
-                data: graphData.categories.map(function (a) { return a.name; }),
+                data: graphData.categories.map(a => a.name),
                 type: 'scroll', 
                 top: 'bottom', 
                 textStyle: { color: '#fff' },
-                pageIconColor: '#00ffff', // 图例翻页按钮的颜色
+                pageIconColor: '#00ffff',
                 pageTextStyle: { color: '#fff' }
             },
+            
             series: [{
                 type: 'graph',
                 layout: 'force',
-                // ✅ 这里调用抽离的数据
                 data: graphData.nodes,
                 links: graphData.links,
                 categories: graphData.categories,
+                roam: true,
                 
-                roam: true, // 允许鼠标缩放和拖拽
                 label: { 
-                    show: true, 
-                    position: 'bottom', 
-                    color: '#fff', 
-                    fontSize: 13,
-                    textBorderColor: '#000', // 给名字加上黑边，防止看不清
-                    textBorderWidth: 2
+                    show: true, position: 'bottom', color: '#fff', fontSize: 13,
+                    textBorderColor: '#000', textBorderWidth: 2
                 },
                 itemStyle: {
-                    borderColor: '#fff', // 节点白边
-                    borderWidth: 1.5,
-                    shadowBlur: 15, // 发光特效
-                    shadowColor: 'rgba(255, 255, 255, 0.4)'
+                    borderColor: '#fff', borderWidth: 1.5,
+                    shadowBlur: 15, shadowColor: 'rgba(255, 255, 255, 0.4)'
                 },
-                edgeSymbol: ['none', 'arrow'], // 线条加上箭头
-                edgeSymbolSize: [4, 8], // 稍微把箭头调精致一点
+                edgeSymbol: ['none', 'none'], 
                 edgeLabel: {
                     show: true,
-                    formatter: function (params) { return params.data.value; },
-                    color: 'rgba(255, 255, 255, 0.6)', // 平时的关系字变半透明
-                    fontSize: 11
+                    formatter: function (params) { return params.data.value || params.data.relation || ''; },
+                    color: 'rgba(255, 255, 255, 0.6)', fontSize: 11
                 },
+                lineStyle: { color: 'source', curveness: 0.1, width: 1.5, opacity: 0.5 },
+                
                 force: {
-                    repulsion: 800, // 排斥力
-                    edgeLength: [120, 250], // 连线的弹性长度范围
-                    gravity: 0.1 // 向中心的引力，防止飞出屏幕
+                    repulsion: [400, 1000], 
+                    edgeLength: [60, 200],  
+                    gravity: 0.15,          
+                    friction: 0.2,          
+                    layoutAnimation: false 
                 },
-                lineStyle: { 
-                    color: 'source', 
-                    curveness: 0.3, 
-                    width: 1.5, 
-                    opacity: 0.5 // 平时连线半透明，不刺眼
-                },
-                emphasis: { // 这里是核心：鼠标悬停的高级交互特效
-                    focus: 'adjacency', // 聚焦相邻节点，无关节点自动虚化！
-                    lineStyle: { 
-                        width: 4, // 鼠标指上去线变粗
-                        opacity: 1 
-                    },
-                    itemStyle: {
-                        shadowBlur: 30, // 节点发光增强
-                        shadowColor: '#00ffff'
-                    },
-                    edgeLabel: {
-                        color: '#00ffff', // 悬停时关系文字高亮发光
-                        fontSize: 14,
-                        fontWeight: 'bold'
-                    }
+                
+                emphasis: { 
+                    focus: 'adjacency', 
+                    lineStyle: { width: 4, opacity: 1 },
+                    itemStyle: { shadowBlur: 30, shadowColor: '#00ffff' },
+                    edgeLabel: { color: '#00ffff', fontSize: 14, fontWeight: 'bold' }
                 }
             }]
         };
 
         myChart.setOption(option);
-        
-        // 顺手帮你加了一个防浏览器拉伸变形的监听
-        window.addEventListener('resize', function() {
-            myChart.resize();
+        window.addEventListener('resize', () => myChart.resize());
+
+        // ==========================================
+        // 3. 雷达搜索系统逻辑 (代码精简优化)
+        // ==========================================
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+
+        function executeSearch() {
+            const keyword = searchInput.value.trim();
+            if (!keyword) return;
+
+            // 🌟 优化：用 ES6 的 findIndex 替代冗长的 for 循环，执行效率更高，代码更干净
+            const targetIndex = graphData.nodes.findIndex(
+                node => node.name.includes(keyword) || String(node.id) === keyword
+            );
+
+            if (targetIndex !== -1) {
+                const dataModel = myChart.getModel().getSeriesByIndex(0).getData();
+                const nodePosition = dataModel.getItemLayout(targetIndex);
+
+                if (nodePosition) {
+                    // 瞬间锁定，保护坐标体系
+                    myChart.setOption({
+                        series: [{ center: [nodePosition[0], nodePosition[1]], zoom: 3 }]
+                    });
+                }
+
+                myChart.dispatchAction({ type: 'downplay' });
+                myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: targetIndex });
+                myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: targetIndex });
+                
+            } else {
+                alert('【系统警告】未在特雷森数据库中检索到该档案：' + keyword);
+            }
+        }
+
+        searchBtn.addEventListener('click', executeSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeSearch();
+        });
+
+        // 🌟 点击背景空白处，瞬间退回全景视角
+        myChart.getZr().on('click', function (event) {
+            if (!event.target) { 
+                 myChart.dispatchAction({ type: 'downplay' });
+                 myChart.dispatchAction({ type: 'hideTip' });
+                 searchInput.value = ''; 
+                 
+                 myChart.setOption({
+                     series: [{ center: null, zoom: 1 }]
+                 });
+            }
         });
     </script>
 </body>
