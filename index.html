@@ -2,93 +2,64 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>特雷森学园：赛马娘羁绊档案馆</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <script src="data.js"></script>
     <style>
-        /* 1. 全局基础样式 */
         body { margin: 0; background-color: #1a1a2e; color: white; font-family: sans-serif; overflow: hidden; }
         
-        /* 🌟 核心新增：全息投影开机 CSS 动画 (调用 GPU 硬件加速，零卡顿) */
         @keyframes cyberBoot {
-            0% { 
-                opacity: 0; 
-                transform: scale(0.85); 
-                filter: blur(20px) brightness(300%); 
-            }
-            40% {
-                opacity: 1;
-                filter: blur(5px) brightness(150%);
-            }
-            100% { 
-                transform: scale(1); 
-                filter: blur(0) brightness(100%); 
-            }
+            0% { opacity: 0; transform: scale(0.85); filter: blur(20px) brightness(300%); }
+            40% { opacity: 1; filter: blur(5px) brightness(150%); }
+            100% { transform: scale(1); filter: blur(0) brightness(100%); }
         }
 
         #main { 
-            width: 100vw; 
-            height: 100vh; 
-            /* 绑定动画：1.5秒，使用极其丝滑的缓动曲线 */
+            width: 100vw; height: 100vh; 
             animation: cyberBoot 1.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; 
             transform-origin: center center;
         }
 
         .title { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        .title h1 { text-shadow: 0 0 10px #00ffff; margin: 0; font-size: 24px; }
         
-        /* 2. 雷达搜索面板赛博朋克样式 */
         .search-box {
-            position: absolute;
-            top: 25px;
-            right: 30px;
-            z-index: 10;
-            display: flex;
-            gap: 12px;
-            background: rgba(20, 20, 40, 0.85);
-            padding: 12px 15px;
-            border: 1px solid #00ffff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(4px);
+            position: absolute; top: 25px; right: 30px; z-index: 10;
+            display: flex; gap: 12px; background: rgba(20, 20, 40, 0.85);
+            padding: 12px 15px; border: 1px solid #00ffff; border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); backdrop-filter: blur(4px);
         }
         #searchInput {
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            outline: none;
-            padding: 5px;
-            width: 180px;
-            font-size: 15px;
-            transition: border-color 0.3s;
+            background: transparent; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff; outline: none; padding: 5px; width: 180px; font-size: 15px; transition: border-color 0.3s;
         }
         #searchInput:focus { border-bottom-color: #00ffff; }
         #searchInput::placeholder { color: rgba(255, 255, 255, 0.4); }
         #searchBtn {
-            background: transparent;
-            color: #00ffff;
-            border: 1px solid #00ffff;
-            padding: 6px 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s;
+            background: transparent; color: #00ffff; border: 1px solid #00ffff;
+            padding: 6px 16px; font-weight: bold; cursor: pointer; border-radius: 4px; transition: all 0.3s;
         }
-        #searchBtn:hover {
-            background: #00ffff;
-            color: #1a1a2e;
-            box-shadow: 0 0 10px #00ffff;
+        #searchBtn:hover { background: #00ffff; color: #1a1a2e; box-shadow: 0 0 10px #00ffff; }
+
+        @media (max-width: 768px) {
+            .title h1 { font-size: 18px; }
+            .search-box {
+                top: auto; bottom: 30px; right: 50%; transform: translateX(50%);
+                width: 85vw; justify-content: space-between; padding: 10px;
+            }
+            #searchInput { width: 60%; }
         }
     </style>
 </head>
 <body>
     <div class="title">
-        <h1 style="text-shadow: 0 0 10px #00ffff;">特雷森学园羁绊网络</h1>
+        <h1>特雷森学园羁绊网络</h1>
     </div>
     
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="检索代号或姓名...">
-        <button id="searchBtn">锁定 (Enter)</button>
+        <button id="searchBtn">锁定</button>
     </div>
     
     <div id="main"></div>
@@ -97,28 +68,21 @@
         const chartDom = document.getElementById('main');
         const myChart = echarts.init(chartDom);
         
-        // ==========================================
-        // 1. 数据预处理
-        // ==========================================
         graphData.nodes.forEach(node => {
             node.symbol = 'image://icons/' + node.id + '.png';
             node.symbolSize = node.symbolSize ? node.symbolSize * 1.2 : 50;
             node.itemStyle = { color: '#3b3b5c' }; 
         });
 
-        // ==========================================
-        // 2. 核心图表配置 (坚如磐石的防撕裂底层)
-        // ==========================================
         const option = {
             backgroundColor: '#1a1a2e',
-            animation: false, // 严禁内部动画，确保护连线 100% 严丝合缝插入节点
+            animation: false, 
 
             tooltip: { 
                 show: true, 
-                backgroundColor: 'rgba(20, 20, 40, 0.95)', 
-                borderColor: '#00ffff', 
-                borderWidth: 1,
-                padding: 12,
+                triggerOn: 'click', // 保持点击触发，性能极速
+                enterable: true,    
+                backgroundColor: 'rgba(20, 20, 40, 0.95)', borderColor: '#00ffff', borderWidth: 1, padding: 12,
                 textStyle: { color: '#fff', fontSize: 14 },
                 formatter: function (params) {
                     if (params.dataType === 'node') {
@@ -128,7 +92,7 @@
                                 <img src="${imgPath}" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00ffff; box-shadow: 0 0 8px #00ffff; object-fit: cover; background-color: #3b3b5c;">
                                 <div>
                                     <div style="font-size: 18px; font-weight: bold; color: #00ffff; margin-bottom: 4px;">${params.data.name}</div>
-                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">特雷森档案编号: ${params.data.id}</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">档案编号: ${params.data.id}</div>
                                 </div>
                             </div>
                         `;
@@ -139,9 +103,7 @@
                             <div style="padding: 4px 8px; text-align: center;">
                                 <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">羁绊观测记录</div>
                                 <div style="font-size: 14px; font-weight: bold;">${relationNames}</div>
-                                <div style="margin-top: 10px; font-size: 16px; color: #ff00ff; text-shadow: 0 0 5px #ff00ff;">
-                                    【 ${relationValue} 】
-                                </div>
+                                <div style="margin-top: 10px; font-size: 16px; color: #ff00ff; text-shadow: 0 0 5px #ff00ff;">【 ${relationValue} 】</div>
                             </div>
                         `;
                     }
@@ -149,52 +111,20 @@
             },
             
             legend: { 
-                data: graphData.categories.map(a => a.name),
-                type: 'scroll', 
-                top: 'bottom', 
-                textStyle: { color: '#fff' },
-                pageIconColor: '#00ffff',
-                pageTextStyle: { color: '#fff' }
+                data: graphData.categories.map(a => a.name), type: 'scroll', top: 'bottom', 
+                textStyle: { color: '#fff' }, pageIconColor: '#00ffff', pageTextStyle: { color: '#fff' }
             },
             
             series: [{
-                type: 'graph',
-                layout: 'force',
-                data: graphData.nodes,
-                links: graphData.links,
-                categories: graphData.categories,
-                roam: true,
-                
-                label: { 
-                    show: true, position: 'bottom', color: '#fff', fontSize: 13,
-                    textBorderColor: '#000', textBorderWidth: 2
-                },
-                itemStyle: {
-                    borderColor: '#fff', borderWidth: 1.5,
-                    shadowBlur: 15, shadowColor: 'rgba(255, 255, 255, 0.4)'
-                },
+                type: 'graph', layout: 'force', data: graphData.nodes, links: graphData.links, categories: graphData.categories, roam: true,
+                scaleLimit: { min: 0.3, max: 4 }, 
+                label: { show: true, position: 'bottom', color: '#fff', fontSize: 13, textBorderColor: '#000', textBorderWidth: 2 },
+                itemStyle: { borderColor: '#fff', borderWidth: 1.5, shadowBlur: 15, shadowColor: 'rgba(255, 255, 255, 0.4)' },
                 edgeSymbol: ['none', 'none'], 
-                edgeLabel: {
-                    show: true,
-                    formatter: function (params) { return params.data.value || params.data.relation || ''; },
-                    color: 'rgba(255, 255, 255, 0.6)', fontSize: 11
-                },
+                edgeLabel: { show: true, formatter: function (p) { return p.data.value || p.data.relation || ''; }, color: 'rgba(255, 255, 255, 0.6)', fontSize: 11 },
                 lineStyle: { color: 'source', curveness: 0.1, width: 1.5, opacity: 0.5 },
-                
-                force: {
-                    repulsion: [400, 1000], 
-                    edgeLength: [60, 200],  
-                    gravity: 0.15,          
-                    friction: 0.2,          
-                    layoutAnimation: false 
-                },
-                
-                emphasis: { 
-                    focus: 'adjacency', 
-                    lineStyle: { width: 4, opacity: 1 },
-                    itemStyle: { shadowBlur: 30, shadowColor: '#00ffff' },
-                    edgeLabel: { color: '#00ffff', fontSize: 14, fontWeight: 'bold' }
-                }
+                force: { repulsion: [400, 1000], edgeLength: [60, 200], gravity: 0.15, friction: 0.2, layoutAnimation: false },
+                emphasis: { focus: 'none', lineStyle: { width: 4, opacity: 1 }, itemStyle: { shadowBlur: 30, shadowColor: '#00ffff' }, edgeLabel: { color: '#00ffff', fontSize: 14, fontWeight: 'bold' } }
             }]
         };
 
@@ -202,57 +132,90 @@
         window.addEventListener('resize', () => myChart.resize());
 
         // ==========================================
-        // 3. 雷达搜索系统逻辑 (代码精简优化)
+        // 🌟 V1.7 核心重构：绝对名称定位算法
         // ==========================================
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
 
-        function executeSearch() {
-            const keyword = searchInput.value.trim();
+        function executeSearch(keywordOverride) {
+            const keyword = keywordOverride || searchInput.value.trim();
             if (!keyword) return;
 
-            // 🌟 优化：用 ES6 的 findIndex 替代冗长的 for 循环，执行效率更高，代码更干净
-            const targetIndex = graphData.nodes.findIndex(
-                node => node.name.includes(keyword) || String(node.id) === keyword
-            );
+            // 1. 在源数据中找出绝对的目标马娘 (先精准，后模糊)
+            let rawTarget = graphData.nodes.find(n => String(n.id) === keyword || n.name === keyword);
+            if (!rawTarget) {
+                rawTarget = graphData.nodes.find(n => n.name.includes(keyword));
+            }
 
-            if (targetIndex !== -1) {
-                const dataModel = myChart.getModel().getSeriesByIndex(0).getData();
-                const nodePosition = dataModel.getItemLayout(targetIndex);
-
-                if (nodePosition) {
-                    // 瞬间锁定，保护坐标体系
-                    myChart.setOption({
-                        series: [{ center: [nodePosition[0], nodePosition[1]], zoom: 3 }]
-                    });
-                }
-
-                myChart.dispatchAction({ type: 'downplay' });
-                myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: targetIndex });
-                myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: targetIndex });
+            if (rawTarget) {
+                const targetName = rawTarget.name;
                 
+                // 2. 从 ECharts 引擎底层抓取该名字的【绝对渲染索引】(杜绝重排导致的错位)
+                const dataModel = myChart.getModel().getSeriesByIndex(0).getData();
+                const viewIndex = dataModel.indexOfName(targetName);
+
+                if (viewIndex !== -1) {
+                    // 抓取坐标并切镜头
+                    const nodePosition = dataModel.getItemLayout(viewIndex);
+                    if (nodePosition) {
+                        myChart.setOption({ series: [{ center: [nodePosition[0], nodePosition[1]], zoom: 3 }] });
+                    }
+
+                    // 3. 圈出她的关系网 (利用唯一的名字进行标记)
+                    const connectedNames = [];
+                    graphData.nodes.forEach(n => {
+                        if (n.name === targetName) {
+                            connectedNames.push(n.name);
+                            return;
+                        }
+                        const hasLink = graphData.links.some(l => 
+                            ((l.source === rawTarget.id || l.source === rawTarget.name) && (l.target === n.id || l.target === n.name)) ||
+                            ((l.target === rawTarget.id || l.target === rawTarget.name) && (l.source === n.id || l.source === n.name))
+                        );
+                        if (hasLink) connectedNames.push(n.name);
+                    });
+
+                    // 4. 绝对高亮：基于名字进行高亮，绝不跳错角色
+                    myChart.dispatchAction({ type: 'downplay' });
+                    myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: connectedNames });
+                    myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: viewIndex });
+                }
             } else {
                 alert('【系统警告】未在特雷森数据库中检索到该档案：' + keyword);
             }
         }
 
-        searchBtn.addEventListener('click', executeSearch);
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeSearch();
+        searchBtn.addEventListener('click', () => executeSearch());
+        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeSearch(); });
+
+        // 🌟 修复关键：点击节点时，将它的【绝对名字】喂给搜索函数，彻底切断物理序号的传递！
+        myChart.on('click', { dataType: 'node' }, function(params) {
+            searchInput.value = params.data.name; 
+            setTimeout(() => {
+                executeSearch(params.data.name); 
+            }, 50);
         });
 
-        // 🌟 点击背景空白处，瞬间退回全景视角
+        // 点击虚空深处，恢复出厂全景状态
         myChart.getZr().on('click', function (event) {
             if (!event.target) { 
                  myChart.dispatchAction({ type: 'downplay' });
                  myChart.dispatchAction({ type: 'hideTip' });
                  searchInput.value = ''; 
-                 
-                 myChart.setOption({
-                     series: [{ center: null, zoom: 1 }]
-                 });
+                 myChart.setOption({ series: [{ center: null, zoom: 1 }] });
             }
         });
+
+        // URL 参数监听直达
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const target = urlParams.get('target');
+            if (target) {
+                searchInput.value = target;
+                setTimeout(() => executeSearch(target), 1600);
+            }
+        });
+
     </script>
 </body>
 </html>
